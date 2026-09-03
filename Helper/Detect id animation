@@ -1,0 +1,109 @@
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Variables quản lý trạng thái
+local isDetecting = false
+local animationConnection = nil
+
+-- 1. TẠO GIAO DIỆN UI (ScreenGui)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AnimDetectorGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+-- Tạo khung chứa chính (Frame)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 100)
+mainFrame.Position = UDim2.new(0.5, -150, 0.8, -50)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainFrame
+
+-- Nút bật/tắt phát hiện
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 280, 0, 35)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.BackgroundColor3 = Color3.fromRGB(190, 40, 40)
+toggleButton.Text = "Bật phát hiện Animation: OFF"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 14
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Parent = mainFrame
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 6)
+btnCorner.Parent = toggleButton
+
+-- Label hiển thị ID Animation
+local idLabel = Instance.new("TextBox") -- Dùng TextBox dạng ReadOnly để người chơi có thể Ctrl+C copy ID dễ dàng
+idLabel.Name = "IDLabel"
+idLabel.Size = UDim2.new(0, 280, 0, 35)
+idLabel.Position = UDim2.new(0, 10, 0, 55)
+idLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+idLabel.Text = "ID Animation sẽ hiện ở đây..."
+idLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+idLabel.TextSize = 13
+idLabel.Font = Enum.Font.SourceSans
+idLabel.ClearTextOnFocus = false
+idLabel.TextEditable = false -- Không cho sửa text nhưng vẫn highlight copy được
+idLabel.Parent = mainFrame
+
+local labelCorner = Instance.new("UICorner")
+labelCorner.CornerRadius = UDim.new(0, 6)
+labelCorner.Parent = idLabel
+
+
+-- 2. XỬ LÝ LẮNG NGHE ANIMATION
+local function setupAnimationListener(character)
+	local humanoid = character:WaitForChild("Humanoid", 5)
+	if not humanoid then return end
+	
+	local animator = humanoid:WaitForChild("Animator", 5)
+	if not animator then return end
+
+	-- Ngắt kết nối cũ nếu có
+	if animationConnection then
+		animationConnection:Disconnect()
+		animationConnection = nil
+	end
+
+	-- Lắng nghe khi animation mới bắt đầu chạy
+	animationConnection = animator.AnimationPlayed:Connect(function(track)
+		if isDetecting and track.Animation then
+			local animId = track.Animation.AnimationId
+			idLabel.Text = animId
+			print("[Anim Detector] ID: " .. animId)
+		end
+	end)
+end
+
+-- Tải lại sự kiện khi Character hồi sinh (Respawn)
+if localPlayer.Character then
+	setupAnimationListener(localPlayer.Character)
+end
+
+localPlayer.CharacterAdded:Connect(function(newCharacter)
+	setupAnimationListener(newCharacter)
+end)
+
+
+-- 3. XỬ LÝ SỰ KIỆN NÚT BẬT / TẮT
+toggleButton.MouseButton1Click:Connect(function()
+	isDetecting = not isDetecting
+	
+	if isDetecting then
+		toggleButton.Text = "Bật phát hiện Animation: ON"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(40, 190, 40)
+		idLabel.Text = "Đang chờ phát hiện Animation..."
+	else
+		toggleButton.Text = "Bật phát hiện Animation: OFF"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(190, 40, 40)
+		idLabel.Text = "Đã tắt phát hiện."
+	end
+end)
