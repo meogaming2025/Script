@@ -1,5 +1,3 @@
--- LocalScript
-
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local TweenService = game:GetService("TweenService")
@@ -8,7 +6,6 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- Dùng FindFirstChild để không bị lỗi crash nếu thiếu path này trong game
 local function safePath(root, ...)
     local current = root
     local path = {...}
@@ -22,7 +19,6 @@ end
 local Sprinting = safePath(ReplicatedStorage, "Systems", "Character", "Game", "Sprinting")
 local NetworkRemoteEvent = safePath(ReplicatedStorage, "Modules", "Network", "Network", "RemoteEvent")
 
--- Danh sách tên các kỹ năng
 local abilityNames = {
     "Slash",
     "Stab",
@@ -31,8 +27,6 @@ local abilityNames = {
     "Lacerate",
     "Perforating"
 }
-
--- ===== CÁC HÀM TẠO BUFFER CHO TỪNG KỸ NĂNG =====
 
 local function createSlashBuffer()
     local bytes = { 3, 5, 0, 0, 0, 83, 108, 97, 115, 104 }
@@ -70,19 +64,15 @@ local function createCarvingSlashBuffer()
     return b
 end
 
--- Trạng thái Extreme Click
 local extremeClickEnabled = false
 
--- ===== HÀM THỰC HIỆN TẤN CÔNG (REMOTE / EXTREME CLICK GUI) =====
 local function triggerSlash(useAllAbilities)
     local clickCount = extremeClickEnabled and 5 or 1 
     
     if useAllAbilities then
-        -- Kích hoạt TOÀN BỘ kỹ năng khi gặp Guest 1337 trong vùng nhận diện
         for _, abilityName in ipairs(abilityNames) do
             local success = false
             
-            -- Cách 1: Gửi qua RemoteEvent với đúng buffer của từng skill
             if NetworkRemoteEvent then
                 pcall(function()
                     if abilityName == "Slash" then
@@ -100,7 +90,6 @@ local function triggerSlash(useAllAbilities)
                 end)
             end
 
-            -- Cách 2: Nếu RemoteEvent thất bại hoặc bật Extreme Click, click GUI
             if not success or extremeClickEnabled then
                 local abilityBtn = safePath(playerGui, "MainUI", "AbilityContainer", abilityName)
                 if abilityBtn then
@@ -120,7 +109,6 @@ local function triggerSlash(useAllAbilities)
             end
         end
     else
-        -- Kích hoạt kỹ năng (chế độ thường)
         if NetworkRemoteEvent then
             for _, abilityName in ipairs(abilityNames) do
                 pcall(function()
@@ -140,8 +128,6 @@ local function triggerSlash(useAllAbilities)
         end
     end
 end
-
--- ===== BIẾN HỆ THỐNG & CẤU HÌNH PHẠM VI =====
 
 local MAX_STAMINA = 110
 local STAMINA_LOSS = 9.5
@@ -182,13 +168,11 @@ task.spawn(function()
     end
 end)
 
--- Tạo ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MyScreenUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Frame chính
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 560, 0, 360)
@@ -202,7 +186,6 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = mainFrame
 
--- Thanh tiêu đề
 local titleBar = Instance.new("Frame")
 titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 38)
@@ -248,7 +231,6 @@ local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 6)
 closeCorner.Parent = closeButton
 
--- Khu vực nội dung PAGE 1
 local contentFrame = Instance.new("Frame")
 contentFrame.Name = "ContentFrame"
 contentFrame.Size = UDim2.new(0, 420, 1, -48)
@@ -262,7 +244,6 @@ contentLayout.Padding = UDim.new(0, 15)
 contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
 contentLayout.Parent = contentFrame
 
--- ===== CỘT 1 (Auto M1 / Range Visual) =====
 local leftColumn = Instance.new("Frame")
 leftColumn.Name = "LeftColumn"
 leftColumn.Size = UDim2.new(0, 125, 1, 0)
@@ -400,7 +381,6 @@ autoM1Button.MouseButton1Click:Connect(function()
     end
 end)
 
--- Nút Range Visual
 local rangeVisualButton = Instance.new("TextButton")
 rangeVisualButton.Name = "RangeVisualButton"
 rangeVisualButton.Size = UDim2.new(0, 125, 0, 36)
@@ -483,7 +463,6 @@ rangeVisualButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Container Range Box
 local radiusContainer = Instance.new("Frame")
 radiusContainer.Name = "RadiusContainer"
 radiusContainer.Size = UDim2.new(0, 125, 0, 50)
@@ -528,7 +507,6 @@ rangeRadiusBox.FocusLost:Connect(function()
     end
 end)
 
--- Container Opacity Box
 local opacityContainer = Instance.new("Frame")
 opacityContainer.Name = "OpacityContainer"
 opacityContainer.Size = UDim2.new(0, 125, 0, 50)
@@ -573,7 +551,6 @@ rangeOpacityBox.FocusLost:Connect(function()
     end
 end)
 
--- ===== CỘT 2 (Facing Check / Visual) =====
 local middleColumn = Instance.new("Frame")
 middleColumn.Name = "MiddleColumn"
 middleColumn.Size = UDim2.new(0, 125, 1, 0)
@@ -772,7 +749,6 @@ createFacingSizeBox("Z", 5, FACING_SIZE_Z, function(newValue, box)
     end
 end)
 
--- ===== CỘT 3 (ESP Survivors & Guest 1337 M1 delay & EXTREME CLICK) =====
 local rightColumn = Instance.new("Frame")
 rightColumn.Name = "RightColumn"
 rightColumn.Size = UDim2.new(0, 125, 1, 0)
@@ -866,7 +842,6 @@ espButton.MouseButton1Click:Connect(function()
     if espEnabled then createESP() else removeESPHighlights() end
 end)
 
--- ----- NÚT BẬT / TẮT EXTREME CLICK -----
 local extremeClickButton = Instance.new("TextButton")
 extremeClickButton.Name = "ExtremeClickButton"
 extremeClickButton.Size = UDim2.new(0, 125, 0, 36)
@@ -897,7 +872,6 @@ extremeClickButton.MouseButton1Click:Connect(function()
     updateExtremeClickVisual()
 end)
 
--- ----- TEXTBOX & LABEL "Guest 1337 delay" -----
 local guestDelayContainer = Instance.new("Frame")
 guestDelayContainer.Name = "GuestDelayContainer"
 guestDelayContainer.Size = UDim2.new(0, 125, 0, 50)
@@ -941,7 +915,6 @@ guestDelayBox.FocusLost:Connect(function()
     end
 end)
 
--- ----- TEXTBOX & LABEL "M1 delay" -----
 local m1DelayContainer = Instance.new("Frame")
 m1DelayContainer.Name = "M1DelayContainer"
 m1DelayContainer.Size = UDim2.new(0, 125, 0, 50)
@@ -985,7 +958,6 @@ m1DelayBox.FocusLost:Connect(function()
     end
 end)
 
--- ===== NÚT CHUYỂN TRANG =====
 local pageSwitchColumn = Instance.new("Frame")
 pageSwitchColumn.Name = "PageSwitchColumn"
 pageSwitchColumn.Size = UDim2.new(0, 110, 0, 300)
@@ -1030,7 +1002,6 @@ local pageDownCorner = Instance.new("UICorner")
 pageDownCorner.CornerRadius = UDim.new(0, 6)
 pageDownCorner.Parent = pageDownButton
 
--- ===== PAGE 2 (Apply Settings / Auto Apply Settings) =====
 local page2Frame = Instance.new("Frame")
 page2Frame.Name = "Page2Frame"
 page2Frame.Size = UDim2.new(0, 420, 1, -48)
@@ -1088,7 +1059,6 @@ local function createLabeledTextBox(parentColumn, labelText, layoutOrder, defaul
     return box
 end
 
--- ----- CỘT 1 PAGE 2 -----
 local page2Column1 = Instance.new("Frame")
 page2Column1.Name = "Page2Column1"
 page2Column1.Size = UDim2.new(0, 125, 1, 0)
@@ -1152,7 +1122,6 @@ local staminaLossBox = createLabeledTextBox(page2Column1, "Stamina Loss", 4, STA
     end
 end)
 
--- ----- CỘT 2 PAGE 2 -----
 local page2Column2 = Instance.new("Frame")
 page2Column2.Name = "Page2Column2"
 page2Column2.Size = UDim2.new(0, 125, 1, 0)
@@ -1252,7 +1221,6 @@ survivorStaminaButton.MouseButton1Click:Connect(function()
     applyStaminaPreset(100, 20, 10, 26)
 end)
 
--- Chuyển trang UI
 local currentPage = 1
 
 local function updatePageButtons()
@@ -1284,7 +1252,6 @@ player.CharacterAdded:Connect(function()
     if facingVisualEnabled then createFacingBox() end
 end)
 
--- Nút UNHIDE
 local toggleButton = Instance.new("TextButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 75, 0, 40)
@@ -1301,7 +1268,6 @@ local toggleCorner = Instance.new("UICorner")
 toggleCorner.CornerRadius = UDim.new(0, 6)
 toggleCorner.Parent = toggleButton
 
--- Animation mở / đóng UI
 local openSize = mainFrame.Size
 local closedSize = UDim2.new(0, 560, 0, 0)
 local isOpen = true
@@ -1331,7 +1297,6 @@ local function openUI()
     tween:Play()
 end
 
--- Kéo thả UI
 local function makeDraggable(inputObject, targetObject, onClick)
     local dragging = false
     local dragInput, dragStart, startPos
